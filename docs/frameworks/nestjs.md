@@ -62,19 +62,26 @@ To ensure the same Featurevisor SDK instance is available in all routes, create 
 Create a new file named featurevisor.middleware.ts:
 
 ```typescript
-// featurevisor.middleware.ts
-import { Request, Response, NextFunction } from 'express';
-import { FeaturevisorInstance, createInstance } from '@featurevisor/sdk';
-const DATAFILE_URL = 'https://cdn.yoursite.com/datafile.json';
-const REFRESH_INTERVAL = 60 * 5; // every 5 minutes
-const f: FeaturevisorInstance = createInstance({
-  datafileUrl: DATAFILE_URL,
-  refreshInterval: REFRESH_INTERVAL,
-});
-export function featurevisorMiddleware(req: Request, res: Response, next: NextFunction) {
-  req.f = f;
-  next();
+// main.ts
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { createInstance } from '@featurevisor/sdk';
+import { CommonConfigService } from './common-config.service'; // Import the configuration service
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  // Create an instance of the SDK using the configuration values
+  const f = createInstance({
+    datafileUrl: CommonConfigService.DATAFILE_URL,
+    refreshInterval: CommonConfigService.REFRESH_INTERVAL,
+  });
+  // Use the middleware
+  app.use((req, res, next) => {
+    req.f = f;
+    next();
+  });
+   await app.listen(3000);
 }
+bootstrap();
 ```
 
 Update the main.ts file to use the middleware:
